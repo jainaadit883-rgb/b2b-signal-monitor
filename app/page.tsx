@@ -13,6 +13,7 @@ interface Account {
   trigger_date: string | null
   outreach_angle: string | null
   suggested_poc: string | null
+  detected_poc_name: string | null
   last_scanned_at: string | null
   notes: string | null
   last_contact_date: string | null
@@ -90,12 +91,15 @@ async function AccountList() {
             )}
 
             {/* POC info */}
-            {(account.suggested_poc || account.poc_name || account.poc_email || account.poc_phone) && (
-              <div className="mt-3 flex flex-wrap gap-4 text-sm">
-                {account.suggested_poc && (
-                  <div className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
-                    <span className="text-xs font-semibold uppercase tracking-wide">Contact:</span>
-                    <span>{account.suggested_poc}</span>
+            {(account.suggested_poc || account.detected_poc_name || account.poc_name || account.poc_email || account.poc_phone) && (
+              <div className="mt-3 flex flex-wrap gap-3 text-sm items-center">
+                {(account.detected_poc_name || account.suggested_poc) && (
+                  <div className="flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    <span className="text-xs font-semibold uppercase tracking-wide">Reach out to:</span>
+                    <span className="font-semibold">{account.detected_poc_name || ''}</span>
+                    {account.suggested_poc && (
+                      <span className="text-amber-500">({account.suggested_poc})</span>
+                    )}
                   </div>
                 )}
                 {account.poc_name && (

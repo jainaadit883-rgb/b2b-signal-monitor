@@ -34,6 +34,7 @@ export async function runScan(): Promise<ScanResult[]> {
         trigger_date: analysis.trigger ? new Date().toISOString().split('T')[0] : null,
         outreach_angle: analysis.outreachAngle || null,
         suggested_poc: analysis.suggestedPoc || null,
+        detected_poc_name: analysis.detectedPocName || null,
         last_scanned_at: new Date().toISOString(),
       })
       .eq('id', account.id)

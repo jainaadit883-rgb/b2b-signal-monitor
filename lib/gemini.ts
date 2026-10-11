@@ -9,6 +9,7 @@ export interface SignalAnalysis {
   trigger: string
   outreachAngle: string
   suggestedPoc: string
+  detectedPocName: string
 }
 
 export async function analyzeSignals(
@@ -16,7 +17,7 @@ export async function analyzeSignals(
   articles: NewsArticle[]
 ): Promise<SignalAnalysis> {
   if (articles.length === 0) {
-    return { score: 0, summary: 'No recent news found', trigger: '', outreachAngle: '', suggestedPoc: '' }
+    return { score: 0, summary: 'No recent news found', trigger: '', outreachAngle: '', suggestedPoc: '', detectedPocName: '' }
   }
 
   const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
@@ -45,7 +46,8 @@ Respond ONLY with valid JSON, no extra text:
   "summary": "<one sentence: the most relevant signal, or 'No relevant signals this week'>",
   "trigger": "<the specific trigger event, or empty string if none>",
   "outreachAngle": "<one paragraph connecting the trigger to workforce management SaaS, or empty string>",
-  "suggestedPoc": "<the exact job title of the best person to contact at this company right now based on the trigger — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — or empty string if no signal>"
+  "suggestedPoc": "<the exact job title of the best person to contact at this company right now based on the trigger — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — or empty string if no signal>",
+  "detectedPocName": "<the full name of the specific person mentioned in the news who holds the relevant role — e.g. if a new CHRO joined and their name is mentioned, put that name here. Only include a name if it is explicitly stated in the articles above. Empty string if no name found>"
 }`
 
   try {
@@ -60,8 +62,9 @@ Respond ONLY with valid JSON, no extra text:
       trigger: parsed.trigger || '',
       outreachAngle: parsed.outreachAngle || '',
       suggestedPoc: parsed.suggestedPoc || '',
+      detectedPocName: parsed.detectedPocName || '',
     }
   } catch {
-    return { score: 0, summary: 'Analysis unavailable', trigger: '', outreachAngle: '', suggestedPoc: '' }
+    return { score: 0, summary: 'Analysis unavailable', trigger: '', outreachAngle: '', suggestedPoc: '', detectedPocName: '' }
   }
 }
