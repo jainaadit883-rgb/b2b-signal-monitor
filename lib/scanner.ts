@@ -8,6 +8,7 @@ export interface ScanResult {
   score: number
   summary: string
   outreachAngle: string
+  suggestedPoc: string
 }
 
 export async function runScan(): Promise<ScanResult[]> {
@@ -32,6 +33,7 @@ export async function runScan(): Promise<ScanResult[]> {
         last_trigger: analysis.trigger || null,
         trigger_date: analysis.trigger ? new Date().toISOString().split('T')[0] : null,
         outreach_angle: analysis.outreachAngle || null,
+        suggested_poc: analysis.suggestedPoc || null,
         last_scanned_at: new Date().toISOString(),
       })
       .eq('id', account.id)
@@ -42,6 +44,7 @@ export async function runScan(): Promise<ScanResult[]> {
       score: analysis.score,
       summary: analysis.summary,
       outreachAngle: analysis.outreachAngle,
+      suggestedPoc: analysis.suggestedPoc,
     })
   }
 

@@ -12,10 +12,15 @@ interface Account {
   last_trigger: string | null
   trigger_date: string | null
   outreach_angle: string | null
+  suggested_poc: string | null
   last_scanned_at: string | null
   notes: string | null
   last_contact_date: string | null
   relationship_notes: string | null
+  poc_name: string | null
+  poc_title: string | null
+  poc_email: string | null
+  poc_phone: string | null
 }
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -81,6 +86,34 @@ async function AccountList() {
               <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-lg p-3">
                 <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-1">Outreach Angle</p>
                 <p className="text-sm text-indigo-900">{account.outreach_angle}</p>
+              </div>
+            )}
+
+            {/* POC info */}
+            {(account.suggested_poc || account.poc_name || account.poc_email || account.poc_phone) && (
+              <div className="mt-3 flex flex-wrap gap-4 text-sm">
+                {account.suggested_poc && (
+                  <div className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold uppercase tracking-wide">Contact:</span>
+                    <span>{account.suggested_poc}</span>
+                  </div>
+                )}
+                {account.poc_name && (
+                  <div className="flex items-center gap-1.5 text-gray-700">
+                    <span className="font-medium">{account.poc_name}</span>
+                    {account.poc_title && <span className="text-gray-400">· {account.poc_title}</span>}
+                  </div>
+                )}
+                {account.poc_email && (
+                  <a href={`mailto:${account.poc_email}`} className="text-indigo-600 hover:underline">
+                    {account.poc_email}
+                  </a>
+                )}
+                {account.poc_phone && (
+                  <a href={`tel:${account.poc_phone}`} className="text-gray-600">
+                    📞 {account.poc_phone}
+                  </a>
+                )}
               </div>
             )}
 
