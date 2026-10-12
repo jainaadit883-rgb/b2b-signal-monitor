@@ -14,7 +14,8 @@
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "resend": "^6.32.1"
+    "resend": "^6.32.1",
+    "twilio": "^6.1.2"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

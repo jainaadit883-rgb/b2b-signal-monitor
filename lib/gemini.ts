@@ -14,9 +14,10 @@ export interface SignalAnalysis {
 
 export async function analyzeSignals(
   companyName: string,
-  articles: NewsArticle[]
+  articles: NewsArticle[],
+  jobSignals: string = ''
 ): Promise<SignalAnalysis> {
-  if (articles.length === 0) {
+  if (articles.length === 0 && !jobSignals) {
     return { score: 0, summary: 'No recent news found', trigger: '', outreachAngle: '', suggestedPoc: '', detectedPocName: '' }
   }
 
@@ -26,19 +27,26 @@ export async function analyzeSignals(
     .map(a => `- [${a.pubDate}] ${a.title}: ${a.description}`)
     .join('\n')
 
+  const jobSection = jobSignals
+    ? `\nJob postings & hiring news:\n${jobSignals}`
+    : ''
+
   const prompt = `You are analyzing B2B sales signals for a company called "${companyName}".
 
 Arjun sells a workforce management SaaS to mid-market and enterprise companies in India. His product helps companies digitally manage scheduling, attendance, payroll, and compliance.
 
 Recent news about ${companyName}:
-${newsText}
+${newsText || '(no general news found)'}
+${jobSection}
 
 Identify trigger events relevant to Arjun's product:
-- Headcount expansion or hiring surge
+- Headcount expansion or hiring surge (especially for HR Ops, Payroll, Workforce roles → very strong signal)
 - New CHRO, VP Operations, or HR leadership joining
 - Funding rounds (precede team growth)
 - Workforce digitalization statements
 - Operational scaling challenges
+
+If the job postings section shows the company is actively hiring HR / Payroll / Workforce roles, treat that as a strong signal (add 2-3 extra points to the score).
 
 Respond ONLY with valid JSON, no extra text:
 {
@@ -46,8 +54,8 @@ Respond ONLY with valid JSON, no extra text:
   "summary": "<one sentence: the most relevant signal, or 'No relevant signals this week'>",
   "trigger": "<the specific trigger event, or empty string if none>",
   "outreachAngle": "<one paragraph connecting the trigger to workforce management SaaS, or empty string>",
-  "suggestedPoc": "<the exact job title of the best person to contact at this company right now based on the trigger — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — or empty string if no signal>",
-  "detectedPocName": "<the full name of the specific person mentioned in the news who holds the relevant role — e.g. if a new CHRO joined and their name is mentioned, put that name here. Only include a name if it is explicitly stated in the articles above. Empty string if no name found>"
+  "suggestedPoc": "<the exact job title of the best person to contact at this company right now — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — or empty string if no signal>",
+  "detectedPocName": "<the full name of the best person for Arjun to contact at ${companyName} regarding workforce management. First check if any name is explicitly mentioned in the news or job postings above. If not, use your own knowledge about ${companyName}'s leadership team to name the current CHRO, VP HR, VP Operations, or equivalent decision-maker. Provide a real name if you know one — do not leave empty if you have knowledge of this company's leadership>"
 }`
 
   try {

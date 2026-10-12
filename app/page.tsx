@@ -3,6 +3,11 @@ import { io } from 'next/cache'
 import { supabase } from '@/lib/supabase'
 import RunScanButton from './components/RunScanButton'
 
+interface HistoryEntry {
+  date: string
+  score: number
+}
+
 interface Account {
   id: string
   account_name: string
@@ -15,6 +20,7 @@ interface Account {
   suggested_poc: string | null
   detected_poc_name: string | null
   last_scanned_at: string | null
+  signal_history: HistoryEntry[] | null
   notes: string | null
   last_contact_date: string | null
   relationship_notes: string | null
@@ -49,6 +55,46 @@ function StageBadge({ stage }: { stage: string }) {
   )
 }
 
+function Sparkline({ history }: { history: HistoryEntry[] | null }) {
+  if (!history || history.length < 2) return null
+
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date)).slice(-10)
+  const W = 80, H = 28, PAD = 2
+  const max = 10
+
+  const pts = sorted.map((h, i) => {
+    const x = PAD + (i / (sorted.length - 1)) * (W - PAD * 2)
+    const y = H - PAD - (h.score / max) * (H - PAD * 2)
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+
+  const lastScore = sorted[sorted.length - 1].score
+  const prevScore = sorted[sorted.length - 2].score
+  const trend = lastScore > prevScore ? '↑' : lastScore < prevScore ? '↓' : '→'
+  const trendColor = lastScore > prevScore ? '#16a34a' : lastScore < prevScore ? '#dc2626' : '#6b7280'
+
+  return (
+    <div className="flex items-center gap-1.5" title={`Score history (last ${sorted.length} scans)`}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+        <polyline
+          points={pts}
+          fill="none"
+          stroke="#6366f1"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        {sorted.map((h, i) => {
+          const x = PAD + (i / (sorted.length - 1)) * (W - PAD * 2)
+          const y = H - PAD - (h.score / max) * (H - PAD * 2)
+          return <circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r="2" fill="#6366f1" />
+        })}
+      </svg>
+      <span style={{ color: trendColor }} className="text-xs font-semibold">{trend}</span>
+    </div>
+  )
+}
+
 async function AccountList() {
   await io()
 
@@ -68,9 +114,9 @@ async function AccountList() {
         {((accounts as Account[]) || []).map((account, idx) => (
           <div key={account.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-gray-400 font-mono text-sm w-5">{idx + 1}</span>
-                <div>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-gray-400 font-mono text-sm w-5 shrink-0">{idx + 1}</span>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg font-semibold text-gray-900">{account.account_name}</h2>
                     <StageBadge stage={account.account_stage} />
@@ -80,7 +126,10 @@ async function AccountList() {
                   )}
                 </div>
               </div>
-              <ScoreBadge score={account.signal_score} />
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <ScoreBadge score={account.signal_score} />
+                <Sparkline history={account.signal_history} />
+              </div>
             </div>
 
             {account.outreach_angle && (
