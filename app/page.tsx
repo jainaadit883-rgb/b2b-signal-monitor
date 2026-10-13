@@ -30,7 +30,7 @@ interface Account {
 }
 
 const mono: React.CSSProperties = { fontFamily: 'var(--font-geist-mono)' }
-const label: React.CSSProperties = { ...mono, fontSize: '10px', letterSpacing: '.12em', textTransform: 'uppercase', color: '#444' }
+const label: React.CSSProperties = { ...mono, fontSize: '10px', letterSpacing: '.12em', textTransform: 'uppercase', color: '#777' }
 
 function scoreColor(s: number) {
   return s >= 7 ? '#00ff88' : s >= 4 ? '#ffaa00' : '#555'
@@ -151,11 +151,11 @@ async function AccountList() {
                 display: 'grid',
                 gridTemplateColumns: '28px 1fr 80px 80px 100px',
                 gap: '0 24px',
-                padding: '18px 0',
-                borderBottom: '1px solid #111',
+                padding: '22px 0',
+                borderBottom: '1px solid #1a1a1a',
                 alignItems: 'center',
               }}>
-                <span style={{ ...mono, fontSize: '11px', color: '#333' }}>{String(idx + 1).padStart(2, '0')}</span>
+                <span style={{ ...mono, fontSize: '11px', color: '#555' }}>{String(idx + 1).padStart(2, '0')}</span>
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -169,7 +169,7 @@ async function AccountList() {
                     )}
                   </div>
                   {account.signal_summary && (
-                    <p style={{ fontSize: '12px', color: '#555', margin: '3px 0 0', lineHeight: 1.5 }}>{account.signal_summary}</p>
+                    <p style={{ fontSize: '13px', color: '#999', margin: '4px 0 0', lineHeight: 1.6 }}>{account.signal_summary}</p>
                   )}
                 </div>
 
@@ -177,13 +177,13 @@ async function AccountList() {
 
                 <Sparkline history={account.signal_history} />
 
-                <span style={{ ...mono, fontSize: '10px', color: '#555', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                <span style={{ ...mono, fontSize: '10px', color: '#888', letterSpacing: '.06em', textTransform: 'uppercase' }}>
                   {account.account_stage}
                 </span>
               </div>
 
               {/* Expanded detail */}
-              <div style={{ padding: '16px 0 20px 52px', borderBottom: '1px solid #1a1a1a', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ padding: '20px 0 28px 52px', borderBottom: '1px solid #222', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                 {/* Outreach angle */}
                 {account.outreach_angle && (
@@ -192,8 +192,8 @@ async function AccountList() {
                       <span style={label}>OUTREACH ANGLE</span>
                       <CopyButton text={account.outreach_angle} />
                     </div>
-                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: 1.65, borderLeft: '1px solid #2a2a2a', paddingLeft: '12px' }}>
-                      → {account.outreach_angle}
+                    <p style={{ fontSize: '13px', color: '#bbb', margin: 0, lineHeight: 1.7, borderLeft: '2px solid #333', paddingLeft: '14px' }}>
+                      {account.outreach_angle}
                     </p>
                   </div>
                 )}
@@ -201,12 +201,12 @@ async function AccountList() {
                 {/* Why this score */}
                 {account.last_trigger && (
                   <details>
-                    <summary style={{ ...label, cursor: 'pointer', userSelect: 'none' }}>
+                    <summary style={{ ...label, cursor: 'pointer', userSelect: 'none', color: '#666' }}>
                       WHY THIS SCORE →
                     </summary>
-                    <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '1px solid #2a2a2a' }}>
-                      <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>{account.last_trigger}</p>
-                      {account.trigger_date && <p style={{ ...mono, fontSize: '10px', color: '#333', margin: '4px 0 0' }}>{account.trigger_date}</p>}
+                    <div style={{ marginTop: '8px', paddingLeft: '14px', borderLeft: '2px solid #333' }}>
+                      <p style={{ fontSize: '13px', color: '#aaa', margin: 0, lineHeight: 1.6 }}>{account.last_trigger}</p>
+                      {account.trigger_date && <p style={{ ...mono, fontSize: '10px', color: '#555', margin: '4px 0 0' }}>{account.trigger_date}</p>}
                     </div>
                   </details>
                 )}
@@ -218,19 +218,19 @@ async function AccountList() {
                       <div style={label}>CONTACT</div>
                       <div style={{ marginTop: '4px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{account.detected_poc_name}</span>
-                        {account.suggested_poc && <span style={{ ...mono, fontSize: '10px', color: '#444', textTransform: 'uppercase', letterSpacing: '.06em' }}>{account.suggested_poc}</span>}
+                        {account.suggested_poc && <span style={{ ...mono, fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '.06em' }}>{account.suggested_poc}</span>}
                       </div>
                     </div>
                     {account.poc_email && (
                       <div>
                         <div style={label}>EMAIL</div>
-                        <a href={`mailto:${account.poc_email}`} style={{ marginTop: '4px', fontSize: '12px', color: '#555', display: 'block', textDecoration: 'none' }}>{account.poc_email}</a>
+                        <a href={`mailto:${account.poc_email}`} style={{ marginTop: '4px', fontSize: '13px', color: '#888', display: 'block', textDecoration: 'none' }}>{account.poc_email}</a>
                       </div>
                     )}
                     {account.poc_phone && (
                       <div>
                         <div style={label}>PHONE</div>
-                        <span style={{ marginTop: '4px', fontSize: '12px', color: '#555', display: 'block' }}>{account.poc_phone}</span>
+                        <span style={{ marginTop: '4px', fontSize: '13px', color: '#888', display: 'block' }}>{account.poc_phone}</span>
                       </div>
                     )}
                   </div>
@@ -245,13 +245,13 @@ async function AccountList() {
                     {account.notes && (
                       <div>
                         <div style={label}>NOTES</div>
-                        <p style={{ fontSize: '12px', color: '#555', margin: '4px 0 0' }}>{account.notes}</p>
+                        <p style={{ fontSize: '13px', color: '#999', margin: '4px 0 0', lineHeight: 1.6 }}>{account.notes}</p>
                       </div>
                     )}
                     {account.relationship_notes && (
                       <div>
                         <div style={label}>RELATIONSHIP</div>
-                        <p style={{ fontSize: '12px', color: '#555', margin: '4px 0 0' }}>{account.relationship_notes}</p>
+                        <p style={{ fontSize: '13px', color: '#999', margin: '4px 0 0', lineHeight: 1.6 }}>{account.relationship_notes}</p>
                       </div>
                     )}
                   </div>
@@ -262,7 +262,7 @@ async function AccountList() {
         })}
       </div>
 
-      <div style={{ ...mono, fontSize: '10px', color: '#333', letterSpacing: '.08em', textTransform: 'uppercase', marginTop: '24px' }}>
+      <div style={{ ...mono, fontSize: '10px', color: '#555', letterSpacing: '.08em', textTransform: 'uppercase', marginTop: '24px' }}>
         LAST SCAN — {lastScanned} · {list.length} ACCOUNTS MONITORED
       </div>
     </>
