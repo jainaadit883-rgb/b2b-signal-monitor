@@ -50,69 +50,93 @@ export default function AccountActions({ id, stage, notes, lastContact }: Props)
     setMarking(false)
   }
 
-  const inputStyle: React.CSSProperties = {
-    background: '#080c14', border: '1px solid #1a2540', color: '#e2e8f5',
-    fontSize: '13px', borderRadius: '6px', padding: '6px 10px',
-    fontFamily: 'var(--font-geist-sans)', outline: 'none', width: '100%',
+  const monoLabel: React.CSSProperties = {
+    fontFamily: 'var(--font-geist-mono)',
+    fontSize: '10px',
+    letterSpacing: '.1em',
+    textTransform: 'uppercase',
+    color: '#444',
   }
 
-  const btnStyle = (color: string, bg: string, border: string): React.CSSProperties => ({
-    background: bg, border: `1px solid ${border}`, color,
-    fontFamily: 'var(--font-geist-mono)', fontSize: '11px', fontWeight: 600,
-    padding: '5px 12px', borderRadius: '6px', cursor: 'pointer',
-    letterSpacing: '.04em', transition: 'all .15s',
+  const textBtn = (active = false): React.CSSProperties => ({
+    background: 'transparent',
+    border: 'none',
+    color: active ? '#fff' : '#555',
+    fontFamily: 'var(--font-geist-mono)',
+    fontSize: '10px',
+    letterSpacing: '.1em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    padding: '0',
+    transition: 'color .15s',
   })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
 
-      {/* Stage + Contact row */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Stage */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={monoLabel}>STAGE</span>
+          <select
+            value={currentStage}
+            onChange={handleStageChange}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid #333',
+              color: '#888',
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: '10px',
+              letterSpacing: '.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '2px 0',
+              outline: 'none',
+            }}
+          >
+            {STAGES.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+          </select>
+        </div>
 
-        {/* Stage dropdown */}
-        <select
-          value={currentStage}
-          onChange={handleStageChange}
-          style={{ ...inputStyle, width: 'auto', cursor: 'pointer', paddingRight: '28px' }}
-        >
-          {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-
-        {/* Mark as contacted */}
-        <button
-          onClick={handleMarkContacted}
-          disabled={marking}
-          style={btnStyle('#34d399', '#0d2f26', '#1a5c40')}
-        >
-          {marking ? 'Saving...' : contacted ? `✓ Contacted ${contacted}` : '+ Mark Contacted'}
+        {/* Mark contacted */}
+        <button onClick={handleMarkContacted} disabled={marking} style={textBtn(!!contacted)}>
+          {marking ? 'SAVING...' : contacted ? `✓ CONTACTED ${contacted}` : '+ MARK CONTACTED'}
         </button>
 
-        {/* Edit notes toggle */}
-        <button
-          onClick={() => setEditingNotes(!editingNotes)}
-          style={btnStyle('#9f7bfa', '#1a1040', '#2d1a5c')}
-        >
-          {editingNotes ? 'Cancel' : '✏ Edit Notes'}
+        {/* Edit notes */}
+        <button onClick={() => setEditingNotes(!editingNotes)} style={textBtn(editingNotes)}>
+          {editingNotes ? '✕ CANCEL' : '✎ NOTES'}
         </button>
       </div>
 
-      {/* Inline notes editor */}
       {editingNotes && (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', paddingTop: '4px' }}>
           <textarea
             value={currentNotes}
             onChange={e => setCurrentNotes(e.target.value)}
             rows={2}
-            placeholder="Add notes about this account..."
-            style={{ ...inputStyle, resize: 'vertical', flex: 1 }}
+            placeholder="Add notes..."
+            style={{
+              flex: 1,
+              background: '#0a0a0a',
+              border: '1px solid #2a2a2a',
+              color: '#ccc',
+              fontSize: '12px',
+              fontFamily: 'var(--font-geist-mono)',
+              padding: '8px 10px',
+              resize: 'vertical',
+              outline: 'none',
+              lineHeight: 1.5,
+            }}
             autoFocus
           />
           <button
             onClick={handleSaveNotes}
             disabled={savingNotes}
-            style={btnStyle('#4f7ef8', '#111d35', '#1e3464')}
+            style={{ ...textBtn(), color: '#fff', borderBottom: '1px solid #333', paddingBottom: '2px' }}
           >
-            {savingNotes ? 'Saving...' : 'Save'}
+            {savingNotes ? 'SAVING' : 'SAVE →'}
           </button>
         </div>
       )}
