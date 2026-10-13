@@ -122,10 +122,10 @@ async function AccountList() {
       {/* Table header */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '28px 1fr 80px 80px 100px',
+        gridTemplateColumns: '28px 1fr 80px 80px 120px',
         gap: '0 24px',
-        padding: '0 0 10px',
-        borderBottom: '1px solid #1a1a1a',
+        padding: '0 16px 12px',
+        borderBottom: '1px solid #222',
         marginBottom: '4px',
       }}>
         {['#', 'ACCOUNT', 'SCORE', 'TREND', 'STAGE'].map(h => (
@@ -145,15 +145,15 @@ async function AccountList() {
           const isNewHot = jump >= 3
 
           return (
-            <div key={account.id}>
+            <div key={account.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
               {/* Main row */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '28px 1fr 80px 80px 100px',
+                gridTemplateColumns: '28px 1fr 80px 80px 120px',
                 gap: '0 24px',
-                padding: '22px 0',
-                borderBottom: '1px solid #1a1a1a',
+                padding: '22px 16px',
                 alignItems: 'center',
+                background: idx % 2 === 0 ? '#050505' : '#000',
               }}>
                 <span style={{ ...mono, fontSize: '11px', color: '#555' }}>{String(idx + 1).padStart(2, '0')}</span>
 
@@ -183,7 +183,7 @@ async function AccountList() {
               </div>
 
               {/* Expanded detail */}
-              <div style={{ padding: '20px 0 28px 52px', borderBottom: '1px solid #222', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ padding: '20px 16px 28px 68px', background: '#080808', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                 {/* Outreach angle */}
                 {account.outreach_angle && (
