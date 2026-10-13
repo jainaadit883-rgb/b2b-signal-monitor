@@ -17,45 +17,46 @@ export async function analyzeSignals(
   articles: NewsArticle[],
   jobSignals: string = ''
 ): Promise<SignalAnalysis> {
-  if (articles.length === 0 && !jobSignals) {
-    return { score: 0, summary: 'No recent news found', trigger: '', outreachAngle: '', suggestedPoc: '', detectedPocName: '' }
-  }
-
   const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
 
-  const newsText = articles
-    .map(a => `- [${a.pubDate}] ${a.title}: ${a.description}`)
-    .join('\n')
+  const newsText = articles.length > 0
+    ? articles.map(a => `- [${a.pubDate}] ${a.title}: ${a.description}`).join('\n')
+    : '(no recent news articles found this week)'
 
   const jobSection = jobSignals
     ? `\nJob postings & hiring news:\n${jobSignals}`
-    : ''
+    : '\n(no job postings found this week)'
 
   const prompt = `You are analyzing B2B sales signals for a company called "${companyName}".
 
 Arjun sells a workforce management SaaS to mid-market and enterprise companies in India. His product helps companies digitally manage scheduling, attendance, payroll, and compliance.
 
 Recent news about ${companyName}:
-${newsText || '(no general news found)'}
+${newsText}
 ${jobSection}
 
-Identify trigger events relevant to Arjun's product:
-- Headcount expansion or hiring surge (especially for HR Ops, Payroll, Workforce roles → very strong signal)
+IMPORTANT RULES:
+1. Even if no news is available, use your own training knowledge about ${companyName} to provide a useful analysis. These are real Indian companies — you likely know their industry, scale, and leadership.
+2. Always set score to at least 2 if you know the company operates at mid-market or enterprise scale in India, because they are always a potential prospect.
+3. Always provide suggestedPoc and detectedPocName — never leave both empty. Use your knowledge of Indian company leadership.
+4. Always write an outreachAngle — even a general one about how workforce management SaaS would help a company of this type.
+5. If the job postings section shows active hiring for HR/Payroll/Workforce roles, add 2-3 extra points to the score.
+
+Trigger events to look for:
+- Headcount expansion or hiring surge (especially HR Ops, Payroll, Workforce roles)
 - New CHRO, VP Operations, or HR leadership joining
 - Funding rounds (precede team growth)
 - Workforce digitalization statements
 - Operational scaling challenges
 
-If the job postings section shows the company is actively hiring HR / Payroll / Workforce roles, treat that as a strong signal (add 2-3 extra points to the score).
-
 Respond ONLY with valid JSON, no extra text:
 {
-  "score": <integer 0-10>,
-  "summary": "<one sentence: the most relevant signal, or 'No relevant signals this week'>",
-  "trigger": "<the specific trigger event, or empty string if none>",
-  "outreachAngle": "<one paragraph connecting the trigger to workforce management SaaS, or empty string>",
-  "suggestedPoc": "<the exact job title of the best person to contact at this company right now — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — or empty string if no signal>",
-  "detectedPocName": "<the full name of the best person for Arjun to contact at ${companyName} regarding workforce management. First check if any name is explicitly mentioned in the news or job postings above. If not, use your own knowledge about ${companyName}'s leadership team to name the current CHRO, VP HR, VP Operations, or equivalent decision-maker. Provide a real name if you know one — do not leave empty if you have knowledge of this company's leadership>"
+  "score": <integer 2-10, minimum 2 for any known Indian mid-market/enterprise company>,
+  "summary": "<one sentence about the company's current situation and why Arjun should reach out>",
+  "trigger": "<the specific trigger event if one exists, otherwise describe what makes this company a standing prospect>",
+  "outreachAngle": "<one paragraph connecting the company's situation to workforce management SaaS value — always write this>",
+  "suggestedPoc": "<the exact job title of the best person to contact — e.g. 'CHRO', 'VP Operations', 'Head of HR', 'COO' — never empty>",
+  "detectedPocName": "<the full name of the best person for Arjun to contact at ${companyName}. First check the news above. If not found, use your own knowledge of ${companyName}'s leadership — name the current CHRO, VP HR, VP Operations, or equivalent. Always provide a name if you know one.>"
 }`
 
   try {
@@ -73,6 +74,6 @@ Respond ONLY with valid JSON, no extra text:
       detectedPocName: parsed.detectedPocName || '',
     }
   } catch {
-    return { score: 0, summary: 'Analysis unavailable', trigger: '', outreachAngle: '', suggestedPoc: '', detectedPocName: '' }
+    return { score: 2, summary: `${companyName} is a standing prospect for workforce management SaaS`, trigger: 'Baseline prospect', outreachAngle: `${companyName} operates at scale in India and likely manages a large workforce. Arjun's platform could help digitize their attendance, payroll, and compliance workflows.`, suggestedPoc: 'CHRO', detectedPocName: '' }
   }
 }
