@@ -21,13 +21,29 @@ export default function RunScanButton() {
     <button
       onClick={handleScan}
       disabled={loading}
-      className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2"
+      style={{
+        background: loading ? '#1a2540' : '#1a3a6e',
+        border: '1px solid ' + (loading ? '#2e3f5c' : '#4f7ef8'),
+        color: loading ? '#6b7fa3' : '#93bbff',
+        fontFamily: 'var(--font-geist-mono)',
+        fontSize: '13px',
+        fontWeight: 600,
+        padding: '9px 18px',
+        borderRadius: '8px',
+        cursor: loading ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        transition: 'all .2s',
+        letterSpacing: '.02em',
+      }}
     >
       {loading ? (
         <>
-          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          <svg style={{ animation: 'spin 1s linear infinite', width: 14, height: 14 }} fill="none" viewBox="0 0 24 24">
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            <circle style={{ opacity: .25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path style={{ opacity: .75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
           </svg>
           Scanning...
         </>
