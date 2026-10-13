@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import { io } from 'next/cache'
 import { supabase } from '@/lib/supabase'
 import RunScanButton from './components/RunScanButton'
+import CopyButton from './components/CopyButton'
+import AccountActions from './components/AccountActions'
 
 interface HistoryEntry {
   date: string
@@ -36,16 +38,10 @@ function ScoreBar({ score }: { score: number | null }) {
   const color = s >= 7 ? '#34d399' : s >= 4 ? '#f59e0b' : '#475569'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <div style={{
-        flex: 1, height: '6px', borderRadius: '999px',
-        background: '#1a2540', overflow: 'hidden'
-      }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '999px', transition: 'width .5s' }} />
+      <div style={{ flex: 1, height: '6px', borderRadius: '999px', background: '#1a2540', overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '999px' }} />
       </div>
-      <span style={{
-        fontFamily: 'var(--font-geist-mono)', fontSize: '13px', fontWeight: 700,
-        color, minWidth: '36px', textAlign: 'right'
-      }}>{s}/10</span>
+      <span style={{ fontFamily: 'var(--font-geist-mono)', fontSize: '13px', fontWeight: 700, color, minWidth: '36px', textAlign: 'right' }}>{s}/10</span>
     </div>
   )
 }
@@ -54,14 +50,14 @@ function StageBadge({ stage }: { stage: string }) {
   const styles: Record<string, { bg: string; color: string }> = {
     'signed customer': { bg: '#1a2e58', color: '#7aadff' },
     'live pilot':      { bg: '#2d1a5c', color: '#c4aeff' },
+    'contacted':       { bg: '#0d2f26', color: '#34d399' },
   }
   const s = styles[stage] ?? { bg: '#151e30', color: '#6b7fa3' }
   return (
     <span style={{
-      background: s.bg, color: s.color,
-      fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-geist-mono)',
-      padding: '2px 8px', borderRadius: '4px', letterSpacing: '.04em',
-      textTransform: 'uppercase'
+      background: s.bg, color: s.color, fontSize: '10px', fontWeight: 600,
+      fontFamily: 'var(--font-geist-mono)', padding: '2px 8px', borderRadius: '4px',
+      letterSpacing: '.04em', textTransform: 'uppercase'
     }}>{stage}</span>
   )
 }
@@ -94,6 +90,52 @@ function Sparkline({ history }: { history: HistoryEntry[] | null }) {
   )
 }
 
+function DigestCard({ accounts }: { accounts: Account[] }) {
+  const hot = accounts.filter(a => (a.signal_score ?? 0) >= 7)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const notContacted = accounts.filter(a => !a.last_contact_date || a.last_contact_date < thirtyDaysAgo)
+
+  // Biggest score jump since last scan
+  let biggestJump: { name: string; jump: number } | null = null
+  for (const a of accounts) {
+    const h = a.signal_history
+    if (h && h.length >= 2) {
+      const sorted = [...h].sort((x, y) => x.date.localeCompare(y.date))
+      const jump = sorted[sorted.length - 1].score - sorted[sorted.length - 2].score
+      if (jump >= 3 && (!biggestJump || jump > biggestJump.jump)) {
+        biggestJump = { name: a.account_name, jump }
+      }
+    }
+  }
+
+  const stats = [
+    { label: 'Hot accounts', value: hot.length, color: '#34d399', sub: 'Score 7 or above' },
+    { label: 'Not contacted', value: notContacted.length, color: '#f59e0b', sub: 'In last 30 days' },
+    { label: 'Top account', value: accounts[0]?.account_name ?? '—', color: '#9f7bfa', sub: `Score ${accounts[0]?.signal_score ?? 0}/10` },
+    ...(biggestJump ? [{ label: 'Biggest jump', value: `+${biggestJump.jump} pts`, color: '#f87171', sub: biggestJump.name }] : []),
+  ]
+
+  return (
+    <div style={{
+      background: '#0a0f1e', border: '1px solid #1a2540', borderRadius: '12px',
+      padding: '20px 24px', marginBottom: '24px'
+    }}>
+      <div style={{ fontSize: '11px', fontFamily: 'var(--font-geist-mono)', color: '#4f7ef8', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '14px' }}>
+        Weekly Digest
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: '16px' }}>
+        {stats.map(s => (
+          <div key={s.label}>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: s.color, fontFamily: 'var(--font-geist-mono)', lineHeight: 1.1 }}>{s.value}</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#e2e8f5', marginTop: '3px' }}>{s.label}</div>
+            <div style={{ fontSize: '11px', color: '#6b7fa3', marginTop: '1px' }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 async function AccountList() {
   await io()
 
@@ -107,25 +149,16 @@ async function AccountList() {
     ? new Date(list[0].last_scanned_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
     : 'Never'
 
-  const hot = list.filter(a => (a.signal_score ?? 0) >= 7).length
-
   return (
     <>
-      {/* Stats row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        {[
-          { label: 'Accounts', value: list.length, color: '#4f7ef8' },
-          { label: 'Hot (7+)', value: hot, color: '#34d399' },
-          { label: 'Last Scan', value: lastScanned, color: '#9f7bfa', wide: true },
-        ].map(stat => (
-          <div key={stat.label} style={{
-            background: '#0e1525', border: '1px solid #1a2540', borderRadius: '10px',
-            padding: '14px 20px', flex: stat.wide ? '1' : '0 0 auto', minWidth: stat.wide ? '200px' : '80px'
-          }}>
-            <div style={{ fontSize: '11px', color: '#6b7fa3', fontFamily: 'var(--font-geist-mono)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '4px' }}>{stat.label}</div>
-            <div style={{ fontSize: stat.wide ? '14px' : '22px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-          </div>
-        ))}
+      {/* Digest */}
+      <DigestCard accounts={list} />
+
+      {/* Last scan time */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <span style={{ fontSize: '11px', fontFamily: 'var(--font-geist-mono)', color: '#2e3f5c', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+          {list.length} accounts · Last scan {lastScanned}
+        </span>
       </div>
 
       {/* Account cards */}
@@ -134,16 +167,20 @@ async function AccountList() {
           const s = account.signal_score ?? 0
           const accentColor = s >= 7 ? '#34d399' : s >= 4 ? '#f59e0b' : '#475569'
 
+          // Score jump detection
+          const history = account.signal_history
+          const sortedHistory = history ? [...history].sort((a, b) => a.date.localeCompare(b.date)) : []
+          const prevScore = sortedHistory.length >= 2 ? sortedHistory[sortedHistory.length - 2].score : null
+          const jump = prevScore !== null ? s - prevScore : 0
+          const isNewHot = jump >= 3
+
           return (
             <div key={account.id} style={{
-              background: '#0e1525',
-              border: '1px solid #1a2540',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              borderLeft: `3px solid ${accentColor}`,
+              background: '#0e1525', border: '1px solid #1a2540', borderRadius: '12px',
+              overflow: 'hidden', borderLeft: `3px solid ${accentColor}`,
             }}>
               {/* Card header */}
-              <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'flex-start', gap: '12px', justifyContent: 'space-between' }}>
+              <div style={{ padding: '16px 20px 10px', display: 'flex', alignItems: 'flex-start', gap: '12px', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: 0 }}>
                   <span style={{ color: '#2e3f5c', fontFamily: 'var(--font-geist-mono)', fontSize: '12px', paddingTop: '2px', minWidth: '18px' }}>
                     {String(idx + 1).padStart(2, '0')}
@@ -152,6 +189,15 @@ async function AccountList() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                       <span style={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f5' }}>{account.account_name}</span>
                       <StageBadge stage={account.account_stage} />
+                      {isNewHot && (
+                        <span style={{
+                          background: '#2e1007', border: '1px solid #7c2d12', color: '#fb923c',
+                          fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px',
+                          fontFamily: 'var(--font-geist-mono)', letterSpacing: '.05em'
+                        }}>
+                          🔥 +{jump} NEW HOT
+                        </span>
+                      )}
                     </div>
                     {account.signal_summary && (
                       <p style={{ fontSize: '13px', color: '#8899bb', margin: 0, lineHeight: 1.5 }}>{account.signal_summary}</p>
@@ -168,41 +214,52 @@ async function AccountList() {
                 <ScoreBar score={account.signal_score} />
               </div>
 
-              {/* Outreach angle */}
+              {/* Outreach angle with Copy button */}
               {account.outreach_angle && (
-                <div style={{
-                  margin: '0 20px 14px 50px',
-                  background: '#111d35', border: '1px solid #1e3464',
-                  borderRadius: '8px', padding: '12px 14px',
-                  borderLeft: '3px solid #4f7ef8'
-                }}>
-                  <div style={{ fontSize: '10px', fontFamily: 'var(--font-geist-mono)', color: '#4f7ef8', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '5px' }}>Outreach Angle</div>
+                <div style={{ margin: '0 20px 14px 50px', background: '#111d35', border: '1px solid #1e3464', borderRadius: '8px', padding: '12px 14px', borderLeft: '3px solid #4f7ef8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '10px', fontFamily: 'var(--font-geist-mono)', color: '#4f7ef8', letterSpacing: '.1em', textTransform: 'uppercase' }}>Outreach Angle</div>
+                    <CopyButton text={account.outreach_angle} />
+                  </div>
                   <p style={{ fontSize: '13px', color: '#93bbff', margin: 0, lineHeight: 1.55 }}>{account.outreach_angle}</p>
                 </div>
               )}
 
+              {/* Score explanation (feature #11) */}
+              {account.last_trigger && (
+                <details style={{ margin: '0 20px 14px 50px' }}>
+                  <summary style={{
+                    cursor: 'pointer', fontSize: '11px', fontFamily: 'var(--font-geist-mono)',
+                    color: '#2e3f5c', letterSpacing: '.06em', textTransform: 'uppercase',
+                    userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px'
+                  }}>
+                    <span style={{ fontSize: '9px' }}>▶</span> Why this score?
+                  </summary>
+                  <div style={{
+                    marginTop: '8px', background: '#0a0f1e', border: '1px solid #1a2540',
+                    borderRadius: '7px', padding: '10px 14px'
+                  }}>
+                    <div style={{ fontSize: '11px', color: '#6b7fa3', marginBottom: '4px', fontFamily: 'var(--font-geist-mono)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Trigger detected</div>
+                    <div style={{ fontSize: '13px', color: '#e2e8f5' }}>{account.last_trigger}</div>
+                    {account.trigger_date && (
+                      <div style={{ fontSize: '11px', color: '#2e3f5c', marginTop: '4px', fontFamily: 'var(--font-geist-mono)' }}>{account.trigger_date}</div>
+                    )}
+                  </div>
+                </details>
+              )}
+
               {/* POC row */}
-              {(account.detected_poc_name || account.suggested_poc || account.poc_name || account.poc_email || account.poc_phone) && (
+              {(account.detected_poc_name || account.suggested_poc || account.poc_email || account.poc_phone) && (
                 <div style={{ padding: '0 20px 14px 50px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   {(account.detected_poc_name || account.suggested_poc) && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      background: '#1e1a0e', border: '1px solid #3a2a09',
-                      borderRadius: '7px', padding: '6px 12px'
-                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e1a0e', border: '1px solid #3a2a09', borderRadius: '7px', padding: '6px 12px' }}>
                       <span style={{ fontSize: '10px', color: '#b08010', fontFamily: 'var(--font-geist-mono)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Reach out to</span>
-                      {account.detected_poc_name && (
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#fcd06a' }}>{account.detected_poc_name}</span>
-                      )}
-                      {account.suggested_poc && (
-                        <span style={{ fontSize: '12px', color: '#8a6820' }}>· {account.suggested_poc}</span>
-                      )}
+                      {account.detected_poc_name && <span style={{ fontSize: '13px', fontWeight: 700, color: '#fcd06a' }}>{account.detected_poc_name}</span>}
+                      {account.suggested_poc && <span style={{ fontSize: '12px', color: '#8a6820' }}>· {account.suggested_poc}</span>}
                     </div>
                   )}
                   {account.poc_email && (
-                    <a href={`mailto:${account.poc_email}`} style={{ fontSize: '13px', color: '#4f7ef8', textDecoration: 'none' }}>
-                      {account.poc_email}
-                    </a>
+                    <a href={`mailto:${account.poc_email}`} style={{ fontSize: '13px', color: '#4f7ef8', textDecoration: 'none' }}>{account.poc_email}</a>
                   )}
                   {account.poc_phone && (
                     <span style={{ fontSize: '13px', color: '#6b7fa3' }}>📞 {account.poc_phone}</span>
@@ -210,22 +267,23 @@ async function AccountList() {
                 </div>
               )}
 
-              {/* Manual notes */}
-              {(account.notes || account.last_contact_date || account.relationship_notes) && (
-                <div style={{
-                  borderTop: '1px solid #1a2540', margin: '0 20px', padding: '12px 0 14px 30px',
-                  display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px,1fr))', gap: '12px'
-                }}>
+              {/* Actions: stage, contact, notes */}
+              <div style={{ borderTop: '1px solid #1a2540', padding: '12px 20px 14px 50px' }}>
+                <AccountActions
+                  id={account.id}
+                  stage={account.account_stage}
+                  notes={account.notes}
+                  lastContact={account.last_contact_date}
+                />
+              </div>
+
+              {/* Existing notes display + relationship notes */}
+              {(account.notes || account.relationship_notes) && (
+                <div style={{ borderTop: '1px solid #1a2540', padding: '10px 20px 14px 50px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '12px' }}>
                   {account.notes && (
                     <div>
                       <div style={{ fontSize: '10px', color: '#2e3f5c', fontFamily: 'var(--font-geist-mono)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '3px' }}>Notes</div>
                       <div style={{ fontSize: '13px', color: '#6b7fa3' }}>{account.notes}</div>
-                    </div>
-                  )}
-                  {account.last_contact_date && (
-                    <div>
-                      <div style={{ fontSize: '10px', color: '#2e3f5c', fontFamily: 'var(--font-geist-mono)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '3px' }}>Last Contact</div>
-                      <div style={{ fontSize: '13px', color: '#6b7fa3' }}>{account.last_contact_date}</div>
                     </div>
                   )}
                   {account.relationship_notes && (
@@ -246,14 +304,12 @@ async function AccountList() {
 
 export default function Dashboard() {
   return (
-    <main style={{ minHeight: '100vh', background: '#080c14', padding: '0 0 60px' }}>
+    <main style={{ minHeight: '100vh', background: '#080c14', paddingBottom: '60px' }}>
       {/* Header */}
       <div style={{
-        borderBottom: '1px solid #1a2540',
-        background: '#0a0f1e',
-        padding: '20px 32px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: '12px'
+        borderBottom: '1px solid #1a2540', background: '#0a0f1e',
+        padding: '20px 32px', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px'
       }}>
         <div>
           <div style={{ fontSize: '11px', fontFamily: 'var(--font-geist-mono)', color: '#4f7ef8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '4px' }}>
