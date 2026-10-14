@@ -33,3 +33,6 @@ details summary::-webkit-details-marker { display: none; }
 details summary { list-style: none; }
 
 select option { background: #111; color: #fff; }
+
+.news-link { color: #aaa; text-decoration: none; }
+.news-link:hover { color: #fff; }

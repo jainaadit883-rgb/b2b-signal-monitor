@@ -214,10 +214,8 @@ async function AccountList() {
                       {account.last_articles.map((a, i) => (
                         <div key={i} style={{ borderLeft: '2px solid #1e1e1e', paddingLeft: '12px' }}>
                           {a.link ? (
-                            <a href={a.link} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: '12px', color: '#aaa', textDecoration: 'none', lineHeight: 1.5, display: 'block' }}
-                              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                              onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}
+                            <a href={a.link} target="_blank" rel="noopener noreferrer" className="news-link"
+                              style={{ fontSize: '12px', lineHeight: 1.5, display: 'block' }}
                             >
                               {a.title}
                             </a>
