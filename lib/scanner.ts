@@ -58,6 +58,7 @@ export async function runScan(): Promise<ScanResult[]> {
         suggested_poc: suggestedPoc,
         detected_poc_name: detectedPocName,
         signal_history: updatedHistory,
+        last_articles: articles.length > 0 ? articles : null,
         last_scanned_at: new Date().toISOString(),
       })
       .eq('id', account.id)

@@ -2,6 +2,7 @@ export interface NewsArticle {
   title: string
   description: string
   pubDate: string
+  link?: string
 }
 
 export async function fetchNewsForCompany(companyName: string): Promise<NewsArticle[]> {
@@ -18,6 +19,7 @@ export async function fetchNewsForCompany(companyName: string): Promise<NewsArti
       title: item.title || '',
       description: item.description || '',
       pubDate: item.pubDate || '',
+      link: item.link || '',
     }))
   } catch {
     return []

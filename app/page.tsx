@@ -4,8 +4,10 @@ import { supabase } from '@/lib/supabase'
 import RunScanButton from './components/RunScanButton'
 import CopyButton from './components/CopyButton'
 import AccountActions from './components/AccountActions'
+import EmailDraftButton from './components/EmailDraftButton'
 
 interface HistoryEntry { date: string; score: number }
+interface ArticleEntry { title: string; description: string; pubDate: string; link?: string }
 
 interface Account {
   id: string
@@ -27,6 +29,7 @@ interface Account {
   poc_title: string | null
   poc_email: string | null
   poc_phone: string | null
+  last_articles: ArticleEntry[] | null
 }
 
 const mono: React.CSSProperties = { fontFamily: 'var(--font-geist-mono)' }
@@ -196,6 +199,36 @@ async function AccountList() {
                       {account.outreach_angle}
                     </p>
                   </div>
+                )}
+
+                {/* Email draft */}
+                <EmailDraftButton id={account.id} />
+
+                {/* News feed */}
+                {account.last_articles && account.last_articles.length > 0 && (
+                  <details>
+                    <summary style={{ ...label, cursor: 'pointer', userSelect: 'none', color: '#666' }}>
+                      NEWS SOURCES ({account.last_articles.length}) →
+                    </summary>
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {account.last_articles.map((a, i) => (
+                        <div key={i} style={{ borderLeft: '2px solid #1e1e1e', paddingLeft: '12px' }}>
+                          {a.link ? (
+                            <a href={a.link} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: '12px', color: '#aaa', textDecoration: 'none', lineHeight: 1.5, display: 'block' }}
+                              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                              onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}
+                            >
+                              {a.title}
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#aaa', lineHeight: 1.5, display: 'block' }}>{a.title}</span>
+                          )}
+                          <span style={{ ...mono, fontSize: '10px', color: '#444', marginTop: '2px', display: 'block' }}>{a.pubDate}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 )}
 
                 {/* Why this score */}
